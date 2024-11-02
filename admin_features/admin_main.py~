@@ -1,0 +1,20 @@
+# All Codes of Admin Will Reside here
+import streamlit as st
+from .group_management import *
+from .moderator_management import *
+
+def admin_page(user_name):
+    st.title(f"Admin Dashboard - {user_name}")
+
+    # Creating sidebar for navigation
+    st.sidebar.title("Navigation")
+    page = st.sidebar.radio("Go to", ["Overview", "Moderators", "Groups", "Users"])
+
+    if page == "Overview":
+        display_overview() # TODO: Create a display overview of analytics
+    elif page == "Moderators":
+        manage_moderators() # TODO: Create a POST & GET reqs of this
+    elif page == "Groups":
+        manage_groups() # TODO: create groups and add moderators to it
+    elif page =="Users":
+        manage_users() # TODO: user whatsapp and zoom chat management

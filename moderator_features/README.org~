@@ -1,0 +1,54 @@
+* moderator-main.py file code [OLD Just INterface, No Data Upload Feature]
+#+begin_src python
+import streamlit as st
+from pymongo import MongoClient
+from bson import ObjectId
+from database import *
+
+# Function to get moderator's groups from the "users" collection
+def get_moderator_groups(db, user_name):
+    user = db['users'].find_one({"name": user_name, "user_type": "Moderator"})
+    if user and "current_groups" in user:
+        return user['current_groups']
+    return []
+
+# Moderator page implementation
+def moderator_page(user_name):
+    st.title(f"Welcome, {user_name}!")
+    
+    # Initialize MongoDB connection
+    if 'db' not in st.session_state:
+        st.error("Database not initialized. Please contact Admin.")
+        return
+    
+    # Retrieve current groups from the "users" collection
+    groups = get_moderator_groups(st.session_state.db, user_name)
+    
+    if not groups:
+        st.warning("You are not assigned to any group currently.")
+        return
+
+    st.subheader("You are currently assigned to the following groups:")
+    
+    # Display each group the moderator is part of and allow file uploads for each group
+    for group in groups:
+        group_name = group['group_name']
+        st.write(f"Group: {group_name}")
+        
+        # File upload section for the current group
+        whatsapp_chat = st.file_uploader(f"Upload WhatsApp chat for {group_name}", type=["txt"], key=f"whatsapp_{group_name}")
+        zoom_audio = st.file_uploader(f"Upload Zoom audio transcript for {group_name}", type=["txt"], key=f"transcript_{group_name}")
+        zoom_chat = st.file_uploader(f"Upload Zoom chat file for {group_name}", type=["txt"], key=f"chat_{group_name}")
+        zoom_attendance = st.file_uploader(f"Upload Zoom attendance file for {group_name}", type=["csv", "xls", "xlsx"], key=f"attendance_{group_name}")
+
+        # Optionally, handle the uploaded files here (save to database, etc.)
+        if whatsapp_chat:
+            st.success(f"WhatsApp chat for {group_name} uploaded successfully.")
+        if zoom_audio:
+            st.success(f"Zoom audio transcript for {group_name} uploaded successfully.")
+        if zoom_chat:
+            st.success(f"Zoom chat file for {group_name} uploaded successfully.")
+        if zoom_attendance:
+            st.success(f"Zoom attendance file for {group_name} uploaded successfully.")
+
+#+end_src

@@ -1,0 +1,25 @@
+19/07/2024, 11:59 am - Messages and calls are end-to-end encrypted. No one outside of this chat, not even WhatsApp, can read or listen to them. Tap to learn more.
+
+26/10/2020, 8:43 pm - Prof. David Chen created group "Research Lab Alpha"
+
+19/07/2024, 11:59 am - Prof. David Chen added you
+19/07/2024, 11:59 am - Prof. David Chen: Added Sarah to lab group
+19/07/2024, 6:32 pm - Emma Watson: https://dl.acm.org/doi/10.1145/3313831.3376651
+19/07/2024, 6:32 pm - Emma Watson: @Michael
+
+21/07/2024, 10:01 am - Prof. David Chen: https://x.com/research_updates/status/1814676703974994407
+22/07/2024, 11:10 am - Prof. David Chen: https://x.com/tech_insights/status/1800586918117453911
+22/07/2024, 11:10 am - Prof. David Chen: @Michael did you look at this
+
+22/07/2024, 11:14 am - Michael Brown: I had read the paper earlier sir. But just seeing this post now.
+
+24/07/2024, 6:01 pm - Sarah Johnson: Is anybody else facing a lot of hanging issues with overleaf?
+24/07/2024, 6:02 pm - Michael Brown: I did. I closed.
+24/07/2024, 6:03 pm - Sarah Johnson: Did it solve after that? Closing is solving it for me only for some time and then the hanging resumes.
+24/07/2024, 6:03 pm - Emma Watson: I have been experiencing issues for the past month, and my Grammarly is also not working properly.
+24/07/2024, 6:04 pm - Michael Brown: It worked for me at that time temporarily. Haven't checked again.
+24/07/2024, 6:04 pm - Prof. David Chen: Miktex is the answer
+
+25/07/2024, 10:34 am - Prof. David Chen: @Sarah on which day you can come physically to the lab...from 9:00-1:30 time period
+25/07/2024, 10:34 am - Prof. David Chen: We need to restart lab meetings
+25/07/2024, 10:40 am - Sarah Johnson: Sir, Wednesday works for me

@@ -1,0 +1,84 @@
+import streamlit as st
+from dotenv import load_dotenv
+from auth import *
+from database import *
+#from admin_features.admin_main import * # Isse ni ho rha code import
+from admin_features import *
+
+
+# Load the environment variables first
+load_dotenv()
+default_users_path = os.getenv("DEFAULT_USERS_PATH")
+
+# Initialize database
+# def initialize_database():
+#     if 'db' not in st.session_state:
+#         st.session_state.db = db # Imported from the database.py
+#         st.session_state.client = client
+
+def initialize_database():
+    if 'client' not in st.session_state or st.session_state.client is None:
+        st.session_state.client = MongoClient(MONGO_URI)  # Ensure the client is always initialized
+        st.session_state.db = st.session_state.client['kushal_maa_data']
+
+
+# Demo for admin page
+# def admin_page(usr_name):
+#     st.title(usr_name)
+
+def moderator_page(usr_name):
+    st.title(usr_name)
+
+def main():
+    st.title("Kushal Maa Platform")
+    
+    # Initialize database connection
+    initialize_database()
+    
+    # Initialize session state
+    if 'logged_in' not in st.session_state:
+        st.session_state.logged_in = False
+        st.session_state.user_name = None
+        st.session_state.user_type = None
+
+    if not st.session_state.logged_in:
+        # Add the json file of default users to the database
+        insert_initial_users_from_file(default_users_path)
+        
+        # Now take the user input from the user
+        email = st.text_input("Please enter your registered Email")
+        
+        if st.button("Login", key="login_button"):
+            if email:
+                user = check_user(email)
+                user_name = get_user_name(email)
+                if user:
+                    st.session_state.logged_in = True
+                    st.session_state.user_name = user_name
+                    st.session_state.user_type = user["user_type"]
+                    st.rerun()
+                else:
+                    st.error("User email id not registered. Please Contact Admin")
+            else:
+                st.warning("Please enter an email address.")
+    else:
+        if st.session_state.user_type == "Admin":
+            admin_main.admin_page(st.session_state.user_name)
+        elif st.session_state.user_type == "Moderator":
+            moderator_page(st.session_state.user_name)
+        else:
+            st.error("Invalid user type")
+        
+        if st.button("Logout", key="main_logout_button"):
+            st.session_state.logged_in = False
+            st.session_state.user_name = None
+            st.session_state.user_type = None
+            # Close the database connection
+            if 'client' in st.session_state:
+                st.session_state.client.close()
+                del st.session_state.client
+                del st.session_state.db
+            st.rerun()
+
+if __name__ == "__main__":
+    main()

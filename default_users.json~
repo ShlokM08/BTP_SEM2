@@ -1,0 +1,16 @@
+[
+    {
+        "name": "David Gerrard",
+        "email": "david.gerrard122@gmail.com",
+        "user_type": "Admin",
+        "start_date": {"$date": "2023-01-15T09:00:00Z"},
+        "end_date": null
+    },
+    {
+        "name": "John Wick",
+        "email": "john.wick@continental.com",
+        "user_type": "Moderator",
+        "start_date": {"$date": "2023-01-15T09:00:00Z"},
+        "end_date": null
+    }
+]

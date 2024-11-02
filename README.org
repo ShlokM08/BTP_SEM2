@@ -1,0 +1,22 @@
+* Things to run this code
++ I have created database in docker. So please install it and make sure you has port number: "2719" free in your laptop etc.
++ If not then free it or change the port number in docker-compose file for your easiness  (ONLY TOUCH DOCKER COMPOSE FILE IF YOU KNOW HOW TO HANDLE IT OTHERWISE JUST FREE PORT 2719 IN YOU PC).
++ I am using 'mongodb compass' to view database so If you want to see how the data is managed in database please install it.
+
+* To Run this code
++ Use the virtual env in this code.
++ And write the following line in terminal:
+  
+#+begin_src python
+streamlit run main.py
+#+end_src
+
+* Some FAQs
++ I have created a folder "Data" which has whatsapp chats and zoom chat data.
++ If you see personal numbers in chats please ignore.
++ The functionalities related to ADMIN is under:
+  "./admin_features" folder
++ The functionalities related to MODERATOR is under:
+  "./moderator_features" folder.
++ I have created 2 folders here namely:
+  "./whatsapp_code" and "./zoom_code" those I made to test the parsers. So they are not in main code. Its for me to test etc.

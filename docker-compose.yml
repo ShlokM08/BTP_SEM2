@@ -1,0 +1,12 @@
+services:
+  my_mongo_db:
+    image: mongo:latest
+    container_name: mongodb_data
+    ports:
+      - "2719:27017"
+    volumes:
+      - mongodb_kushal_data:/data/mongodb/
+    command: mongod --noauth
+
+volumes:
+  mongodb_kushal_data:
