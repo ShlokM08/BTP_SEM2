@@ -27,7 +27,7 @@ def main():
     if not data.empty:
         # Data parsing and processing
         data['timestamp'] = pd.to_datetime(data['timestamp'], format='%d/%m/%Y, %H:%M')
-
+#da
         # Active users plot
         active_users = data['user'].nunique()
         st.subheader(f"Active Users: {active_users}")

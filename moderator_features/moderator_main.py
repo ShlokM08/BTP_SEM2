@@ -1,130 +1,11 @@
 import streamlit as st
 from pymongo import MongoClient
+import matplotlib.pyplot as plt
 from .whatsapp_chat_parser import *
 from .zoom_audio_service import ZoomAudioService, handle_zoom_audio_upload
 from .zoom_chat_service import ZoomChatService, handle_zoom_chat_upload
 from .zoom_attendence_service import ZoomAttendanceService, handle_zoom_attendance_upload
 from database import *
-import base64
-
-# Function to encode image to base64
-def get_base64_image(image_file):
-    with open(image_file, "rb") as image:
-        encoded = base64.b64encode(image.read()).decode()
-    return encoded
-
-# Set background and styles
-def set_background(image_file):
-    base64_image = get_base64_image(image_file)
-    st.markdown(
-        f"""
-        <style>
-        .stApp {{
-           background-image: url("data:image/jpeg;base64,{base64_image}");
-           background-size: cover;
-           background-position: center;
-           background-attachment: fixed;
-           background-color: transparent;
-        }}
-
-        /* Sidebar styling */
-        .sidebar {{
-            width: 180px;
-            position: fixed;
-            top: 40px;
-            left: 0;
-            height: 100%;
-            background-color: #333;
-            padding-top: 20px;
-            z-index: 1;
-            overflow-x: hidden;
-        }}
-        .sidebar a {{
-            padding: 10px 10px;
-            text-decoration: none;
-            font-size: 1em;
-            color: white;
-            display: block;
-            transition: 0.3s;
-        }}
-        .sidebar a:hover {{
-            background-color: #575757;
-        }}
-
-        /* Top bar styling */
-        .topbar {{
-            position: fixed;
-            right: 0;
-            top: 46px;
-            width: calc(100% - 220px);
-            background-color: rgba(0, 0, 0, 0.8);
-            color: white;
-            padding: 10px 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            z-index: 2;
-            box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.5);
-            height: 50px;
-        }}
-        .topbar .search-box {{
-            background-color: white;
-            color: black;
-            border-radius: 5px;
-            padding: 5px 10px;
-            width: 200px;
-            font-size: 0.9em;
-        }}
-        .profile-icon {{
-            border-radius: 50%;
-            background-color: #575757;
-            color: white;
-            padding: 8px;
-            cursor: pointer;
-            font-weight: bold;
-            font-size: 0.9em;
-            position: relative;
-        }}
-
-        /* Dropdown for profile icon */
-        .dropdown {{
-            display: none;
-            position: absolute;
-            top: 35px;
-            right: 0;
-            background-color: #333;
-            padding: 10px;
-            border-radius: 5px;
-            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
-        }}
-        .profile-icon:hover .dropdown {{
-            display: block;
-        }}
-        .dropdown button {{
-            background-color: #ff4b4b;
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 5px;
-            font-size: 0.9em;
-            cursor: pointer;
-        }}
-        .dropdown button:hover {{
-            background-color: #ff7878;
-        }}
-
-        /* Main content styling */
-        .main-content {{
-            margin-left: 220px;
-            padding-top: 100px; /* Adjusted to move 'Welcome' higher */
-            padding-right: 20px;
-            color: white;
-            font-size: 1.3em; /* Smaller font size for 'Welcome' */
-        }}
-        </style>
-        """,
-        unsafe_allow_html=True
-    )
 
 # Initialize database
 client = MongoClient(MONGO_URI)
@@ -138,6 +19,31 @@ def get_moderator_groups(db, user_name):
     if user and "current_groups" in user:
         return user['current_groups']
     return []
+
+def get_group_message_count(db, group_name):
+    # Aggregates messages by user in the specified group
+    pipeline = [
+        {"$match": {"group_name": group_name}},
+        {"$unwind": "$chat_data"},  # Unwind to go through each message in chat_data
+        {"$group": {"_id": "$chat_data.user", "message_count": {"$sum": 1}}}
+    ]
+    result = db['whatsapp_chats'].aggregate(pipeline)
+    return list(result)
+
+def plot_message_counts(message_counts):
+    # Prepare data for plotting
+    users = [entry["_id"] for entry in message_counts]
+    message_counts = [entry["message_count"] for entry in message_counts]
+
+    # Plot data using matplotlib
+    fig, ax = plt.subplots()
+    ax.bar(users, message_counts, color="skyblue")
+    ax.set_xlabel("Users")
+    ax.set_ylabel("Message Count")
+    ax.set_title("Messages per User in Group")
+
+    # Display plot in Streamlit
+    st.pyplot(fig)
 
 def handle_whatsapp_upload(whatsapp_service, group_name, uploaded_file, user_name):
     try:
@@ -166,40 +72,31 @@ def handle_whatsapp_upload(whatsapp_service, group_name, uploaded_file, user_nam
         st.error(f"Error handling WhatsApp chat: {str(e)}")
 
 def moderator_page(user_name):
-    initials = ''.join([part[0] for part in user_name.split()]).upper()
-    
-    # Set background and styling
-    set_background("assets/Untitled design.jpg")
+    st.sidebar.title("Dashboard")
+    st.sidebar.write("Navigation")
+    page = st.sidebar.radio("Go to", ["Dashboard", "Groups", "Statistics"])
 
-    # Sidebar menu
-    st.markdown(
-        f"""
-        <div class="sidebar">
-            <a href="#">Dashboard</a>
-            <a href="#">Groups</a>
-            <a href="#">Statistics</a>
-        </div>
-        """, unsafe_allow_html=True
-    )
-
-    # Top bar with search and profile
-    st.markdown(
-        f"""
-        <div class="topbar">
-            <div>Kushal Maa</div>
-            <input type="text" class="search-box" placeholder="Search for anything">
-            <div class="profile-icon">{initials}
-                <div class="dropdown">
-                    <button onclick="logout()">Logout</button>
-                </div>
-            </div>
-        </div>
-        """, unsafe_allow_html=True
-    )
-
-    # Display main content in the central area
-    st.markdown("<div class='main-content'>", unsafe_allow_html=True)
     st.title(f"Welcome, {user_name}!")
 
-    # Remove additional logout button from the main content
-    st.markdown("</div>", unsafe_allow_html=True)
+    if page == "Dashboard":
+        st.write("This is the main dashboard page.")
+    elif page == "Groups":
+        st.subheader("Your Groups")
+        groups = get_moderator_groups(st.session_state.db, user_name)
+        
+        if groups:
+            selected_group = st.selectbox("Select a Group to View Messages", groups)
+            
+            if st.button("Show Message Statistics"):
+                message_counts = get_group_message_count(st.session_state.db, selected_group)
+                if message_counts:
+                    plot_message_counts(message_counts)
+                else:
+                    st.info("No messages found for this group.")
+        else:
+            st.info("No groups found for this user.")
+    elif page == "Statistics":
+        st.write("Statistics page under construction.")
+
+# Example usage
+moderator_page("John Doe")
