@@ -14,6 +14,15 @@ load_dotenv()
 def main():
     st.title("Group Chat Analysis")
 
+    # State selection dropdown at the top
+    st.markdown("<div style='position: fixed; top: 10px; left: 10px; z-index: 1000;'>", unsafe_allow_html=True)
+    selected_state = st.selectbox(
+        "Select State",
+        options=["All States", "Maharashtra", "Madhya Pradesh", "Punjab"],
+        help="Filter data by state",
+        key="state_filter"
+    )
+    st.markdown("</div>", unsafe_allow_html=True)
     # Connect to MongoDB
     client = MongoClient(os.getenv('MONGODB_URI'))
     db = client[os.getenv('MONGO_DB_NAME')]  # Access the database
