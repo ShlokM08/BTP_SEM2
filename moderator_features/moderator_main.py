@@ -9,12 +9,19 @@ from database import *
 import tempfile
 import os
 
+from .moderator_dasboard_graphs import *
+
 # Initialize database
-client = MongoClient(MONGO_URI)
-db = client['kushal_maa_data']
-st.session_state.db = db
+try:
+    MONGO_URI = os.getenv('MONGO_URI', 'your_default_mongo_uri_here')  # Replace with your Mongo URI or use dotenv
+    client = MongoClient(MONGO_URI)
+    db = client['kushal_maa_data']
+    st.session_state.db = db
+except Exception as e:
+    st.error(f"Database initialization failed: {e}")
 
 zoom_chat_service = ZoomChatService(st.session_state.db)
+
 
 def get_moderator_groups(db, user_name):
     """Get list of groups assigned to moderator."""
@@ -23,11 +30,12 @@ def get_moderator_groups(db, user_name):
         return user['current_groups']
     return []
 
+
 def handle_whatsapp_upload(whatsapp_service, group_name, uploaded_file, user_name):
     """Handle WhatsApp chat file upload and processing"""
     try:
         # Read and process the file
-        content = uploaded_file.getvalue().decode('utf-8')
+        content = uploaded_file.getvalue().decode('utf-8', errors='replace')
         
         # Process the chat content
         process_result = whatsapp_service.process_chat_file(content)
@@ -57,82 +65,49 @@ def handle_whatsapp_upload(whatsapp_service, group_name, uploaded_file, user_nam
                 st.error(f"Error saving to database: {save_result['message']}")
                 
     except Exception as e:
-        st.error(f"Error handling WhatsApp chat: {str(e)}")
+        st.error(f"Error handling WhatsApp chat: {e}")
 
 
 def handle_name_mapping(whatsapp_file, mapping_file):
-    """Handle WhatsApp chat file processing with name mapping"""
-    temp_files = []
+    """Handle WhatsApp chat file processing with name mapping."""
     try:
-        # Debug information about uploaded files
-        st.write("Debug Information:")
-        st.write(f"WhatsApp file name: {whatsapp_file.name}")
-        st.write(f"Mapping file name: {mapping_file.name}")
-        st.write(f"WhatsApp file size: {whatsapp_file.size} bytes")
-        st.write(f"Mapping file size: {mapping_file.size} bytes")
-        
-        # Create temporary files for processing
-        with tempfile.NamedTemporaryFile(mode='w+', suffix='.txt', delete=False) as temp_chat_file, \
-             tempfile.NamedTemporaryFile(mode='w+', suffix='.csv', delete=False) as temp_csv_file, \
-             tempfile.NamedTemporaryFile(mode='w+', suffix='.txt', delete=False) as temp_output_file:
-            
-            temp_files = [temp_chat_file.name, temp_csv_file.name, temp_output_file.name]
-            
+        with tempfile.TemporaryDirectory() as temp_dir:
+            # Create temporary file paths
+            temp_chat_file = os.path.join(temp_dir, "chat.txt")
+            temp_csv_file = os.path.join(temp_dir, "mapping.csv")
+            temp_output_file = os.path.join(temp_dir, "output.txt")
+
             # Write uploaded files to temporary locations
-            chat_content = whatsapp_file.getvalue().decode('utf-8')
-            csv_content = mapping_file.getvalue().decode('utf-8')
+            chat_content = whatsapp_file.getvalue().decode('utf-8', errors='replace')
+            csv_content = mapping_file.getvalue().decode('utf-8', errors='replace')
             
-            st.write("CSV Content Preview:")
-            st.code(csv_content[:200])  # Show first 200 characters
+            with open(temp_chat_file, 'w', encoding='utf-8') as f:
+                f.write(chat_content)
+            with open(temp_csv_file, 'w', encoding='utf-8') as f:
+                f.write(csv_content)
             
-            temp_chat_file.write(chat_content)
-            temp_csv_file.write(csv_content)
-            
-            # Ensure the files are written
-            temp_chat_file.flush()
-            temp_csv_file.flush()
-            
-            # Get original filename without extension for output file naming
-            original_filename = os.path.splitext(whatsapp_file.name)[0]
-            
-            st.write(f"Processing files...")
-            # Process the files
-            replace_numbers_with_names(
-                temp_chat_file.name,
-                temp_csv_file.name,
-                temp_output_file.name
-            )
-            
-            # Read processed content
-            with open(temp_output_file.name, 'r', encoding='utf-8') as file:
-                processed_content = file.read()
-            
+            # Process files
+            replace_numbers_with_names(temp_chat_file, temp_csv_file, temp_output_file)
+
+            # Read and display processed content
+            with open(temp_output_file, 'r', encoding='utf-8') as f:
+                processed_content = f.read()
+
             if not processed_content.strip():
                 st.error("Processing resulted in empty output. Please check your input files.")
                 return
-                
-            # Create download button with processed content
+
+            # Create download button
             st.success("File processed successfully!")
             st.download_button(
                 label="Download Processed Chat File",
                 data=processed_content,
-                file_name=f"processed_chat_{original_filename}.txt",
+                file_name=f"processed_chat.txt",
                 mime="text/plain"
             )
-            
-    except ValueError as ve:
-        st.error(f"Invalid file format: {str(ve)}")
     except Exception as e:
-        st.error(f"Error processing files: {str(e)}")
-        st.write("Full error:", e)  # Show full error details
-    finally:
-        # Cleanup temporary files
-        for temp_file in temp_files:
-            try:
-                os.unlink(temp_file)
-            except:
-                pass
-        
+        st.error(f"Error processing files: {e}")
+
 
 def handle_groups_page(user_name):
     """Handle Groups Page."""
@@ -145,12 +120,13 @@ def handle_groups_page(user_name):
 
     st.subheader("You are currently assigned to the following groups:")
     for group in groups:
-        st.write(f"- {group}")
+        group_name = group.get('group_name', 'Unknown Group')  # Use default value if 'group_name' key is missing
+        st.write(f"- {group_name}")
+
 
 def handle_dashboard():
-    """Handle Dashboard Page."""
-    st.title("Dashboard")
-    st.write("Welcome to the Dashboard. Use the sidebar to navigate to other sections.")
+    moderator_graph_main()
+
 
 def moderator_page(user_name):
     """Main Moderator Interface."""
@@ -158,14 +134,12 @@ def moderator_page(user_name):
     page = st.sidebar.radio("Navigate to", ["Dashboard", "Upload Transcripts", "Groups"])
 
     if page == "Dashboard":
-        # Dashboard logic
         handle_dashboard()
 
     elif page == "Upload Transcripts":
-        # Upload Transcripts logic
         st.title(f"Welcome, {user_name}!")
         
-        # Initialize MongoDB connection
+        # Ensure database is initialized
         if 'db' not in st.session_state:
             st.error("Database not initialized. Please contact Admin.")
             return
@@ -175,18 +149,15 @@ def moderator_page(user_name):
         zoom_audio_service = ZoomAudioService(st.session_state.db)
         zoom_attendance_service = ZoomAttendanceService(st.session_state.db)
 
-        # Retrieve current groups
         groups = get_moderator_groups(st.session_state.db, user_name)
-
         if not groups:
             st.warning("You are not assigned to any group currently.")
             return
 
         st.subheader("You are currently assigned to the following groups:")
         
-        # Display each group and file upload options
         for group in groups:
-            group_name = group['group_name']
+            group_name = group.get('group_name', 'Unknown Group')
             st.write(f"Group: {group_name}")
             
             # Create tabs for different upload types
@@ -196,16 +167,13 @@ def moderator_page(user_name):
             with tabs[0]:
                 st.subheader("1. Process WhatsApp Chat with Name Mapping")
                 
-                # Create columns for the two upload options
                 col1, col2 = st.columns(2)
-                
                 with col1:
                     whatsapp_chat = st.file_uploader(
                         f"Upload original WhatsApp chat for {group_name}",
                         type=["txt"],
                         key=f"whatsapp_original_{group_name}"
                     )
-                
                 with col2:
                     mapping_file = st.file_uploader(
                         "Upload name mapping CSV file",
@@ -213,25 +181,18 @@ def moderator_page(user_name):
                         key=f"mapping_{group_name}"
                     )
                 
-                # Process files with name mapping if both files are uploaded
                 if whatsapp_chat and mapping_file:
                     if st.button("Process Files", key=f"process_{group_name}"):
                         handle_name_mapping(whatsapp_chat, mapping_file)
                 
-                # Horizontal line for separation
                 st.markdown("---")
-                
                 st.subheader("2. Upload Processed Chat to Database")
-                st.info("After downloading the processed chat file above, please verify its contents and upload it here to save to the database.")
-                
-                # Upload processed file
+                st.info("After downloading the processed chat file above, verify its contents and upload here.")
                 processed_chat = st.file_uploader(
                     f"Upload processed WhatsApp chat for {group_name}",
                     type=["txt"],
                     key=f"whatsapp_processed_{group_name}"
                 )
-                
-                # Handle processed file upload
                 if processed_chat:
                     handle_whatsapp_upload(whatsapp_service, group_name, processed_chat, user_name)
             
@@ -243,7 +204,8 @@ def moderator_page(user_name):
                     key=f"transcript_{group_name}"
                 )
                 if zoom_audio:
-                    handle_zoom_audio_upload(zoom_audio_service, group_name, zoom_audio, user_name)        
+                    handle_zoom_audio_upload(zoom_audio_service, group_name, zoom_audio, user_name)
+            
             # Zoom Chat Tab
             with tabs[2]:
                 zoom_chat = st.file_uploader(
@@ -262,13 +224,9 @@ def moderator_page(user_name):
                     key=f"attendance_{group_name}"
                 )
                 if zoom_attendance:
-                    handle_zoom_attendance_upload(zoom_attendance_service,
-                                                  group_name,
-                                                  zoom_attendance,
-                                                  user_name)
+                    handle_zoom_attendance_upload(zoom_attendance_service, group_name, zoom_attendance, user_name)
 
     elif page == "Groups":
-        # Groups logic
         handle_groups_page(user_name)
 
 

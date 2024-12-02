@@ -12,7 +12,7 @@ from datetime import datetime
 def get_unique_group_names() -> List[str]:
     """Get unique group names from whatsapp_chats collection"""
     try:
-        unique_groups = db["whatsapp_chats"].distinct("group_name")
+        unique_groups = db["chat_data"].distinct("group_name")
         return sorted(unique_groups)
     except Exception as e:
         st.error(f"Error fetching group names: {str(e)}")
@@ -22,7 +22,7 @@ def get_unique_members() -> List[str]:
     """Get unique member IDs from all chat groups"""
     try:
         # Get all documents from whatsapp_chats
-        all_chats = db["whatsapp_chats"].find({})
+        all_chats = db["chat_data"].find({})
         
         # Extract unique members from the nested chat_data
         unique_members = set()

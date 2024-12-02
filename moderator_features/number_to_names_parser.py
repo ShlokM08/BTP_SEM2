@@ -36,6 +36,8 @@ def replace_numbers_with_names(chat_file_path, csv_file_path, output_file_path):
         # First, verify the CSV file exists and has content
         with open(csv_file_path, 'r', encoding='utf-8') as f:
             csv_content = f.read()
+
+
             print("CSV content length:", len(csv_content))
             print("First 100 chars of CSV:", csv_content[:100])
             
@@ -64,6 +66,7 @@ def replace_numbers_with_names(chat_file_path, csv_file_path, output_file_path):
         # Read the chat file
         with open(chat_file_path, 'r', encoding='utf-8') as file:
             lines = file.readlines()
+
             print("Number of lines in chat:", len(lines))
             print("First line of chat:", lines[0] if lines else "No lines")
         
@@ -92,7 +95,8 @@ def replace_numbers_with_names(chat_file_path, csv_file_path, output_file_path):
         print(f"\nDebug: Writing output file to {output_file_path}")
         # Writing to file
         with open(output_file_path, 'w', encoding='utf-8') as file:
-            file.writelines(processed_lines)
+                file.writelines(processed_lines)
+
             
         print("Processing completed successfully!")
             

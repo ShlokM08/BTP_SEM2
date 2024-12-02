@@ -126,7 +126,8 @@
 #                     st.session_state.logged_in = True
 #                     st.session_state.user_name = user_name
 #                     st.session_state.user_type = user["user_type"]
-#                     st.experimental_rerun()
+#                     st.session_state["reload"] = True
+
 #                 else:
 #                     st.error("User email id not registered. Please Contact Admin")
 #             else:
@@ -151,7 +152,8 @@
 #                 st.session_state.client.close()
 #                 del st.session_state.client
 #                 del st.session_state.db
-#             st.experimental_rerun()
+#             st.session_state["reload"] = True
+
 
 # if __name__ == "__main__":
 #     main()
@@ -169,6 +171,24 @@ st.set_page_config(layout="wide")
 # Load the environment variables first
 load_dotenv()
 default_users_path = os.getenv("DEFAULT_USERS_PATH")
+from dotenv import load_dotenv
+import os
+
+# Load .env file
+load_dotenv()
+
+# Access environment variables
+default_users_path = os.getenv("DEFAULT_USERS_PATH")
+mongodb_uri = os.getenv("MONGODB_URI")
+mongo_db_name = os.getenv("MONGO_DB_NAME")
+mongo_collection = os.getenv("MONGO_COLLECTION")
+
+# Print variables to check if loaded correctly
+print(f"DEFAULT_USERS_PATH: {default_users_path}")
+print(f"MONGODB_URI: {mongodb_uri}")
+print(f"MONGO_DB_NAME: {mongo_db_name}")
+print(f"MONGO_COLLECTION: {mongo_collection}")
+
 
 # Function to encode image to base64
 def get_base64_image(image_file):
@@ -281,6 +301,7 @@ def main():
         st.session_state.user_type = None
 
     if not st.session_state.logged_in:
+        insert_initial_users_from_file(default_users_path)
         # Transparent container for the login section
         st.markdown("<div class='transparent-container'>", unsafe_allow_html=True)
         
@@ -295,7 +316,8 @@ def main():
                     st.session_state.logged_in = True
                     st.session_state.user_name = user_name
                     st.session_state.user_type = user["user_type"]
-                    st.experimental_rerun()
+                    st.session_state["reload"] = True
+
                 else:
                     st.error("User email id not registered. Please Contact Admin")
             else:
@@ -320,7 +342,8 @@ def main():
                 st.session_state.client.close()
                 del st.session_state.client
                 del st.session_state.db
-            st.experimental_rerun()
+            st.session_state["reload"] = True
+
 
 if __name__ == "__main__":
     main()
